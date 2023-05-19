@@ -1,0 +1,19 @@
+1-Log adinda table yaradirsiz.
+Applicationa sorgu gonderen  userin adini,sorgunun zamanini,sorgu gonderilen controllerin ve actionun path ni (Product/GetProducts) o table da qeyd edirsiniz
+2-Product tablesinde her zaman qiymeti 2 den yuxari olan mehsullar gelmelidir butun sorgularda.
+3-Programa her giris eden adam ucun guid generate edin ve db da saxlayin.her sorguda gedib yoxlayin eger adamin guidin vaxti 10 dq kecibse hec bir controllere giris etmeye icaze vermeyin
+4-Gelen sorgulardaki parameterleri nece goture bilerem deye kodu yazin.db a save etmek lazim deyil.
+
+
+ public class CustomActionBaseActionFilter : IActionFilter
+    {
+        public void OnActionExecuted(ActionExecutedContext context)
+        {
+
+        }
+
+        public void OnActionExecuting(ActionExecutingContext context)
+        {
+
+        }
+    }

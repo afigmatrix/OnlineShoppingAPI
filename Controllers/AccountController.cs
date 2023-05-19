@@ -1,7 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OnlineShoppingAPI.ActionFIlters;
+using OnlineShoppingAPI.Constants;
+using OnlineShoppingAPI.Entites;
 using OnlineShoppingAPI.Model.DTO.Account;
+using OnlineShoppingAPI.Service.Abstractions;
+using System;
 using System.Threading.Tasks;
 
 namespace OnlineShoppingAPI.Controllers
@@ -12,15 +17,18 @@ namespace OnlineShoppingAPI.Controllers
     {
         public UserManager<IdentityUser> _userManager { get; }
         public RoleManager<IdentityRole> _roleManager { get; }
+        public IGenericRepository<Log> _logGenericRepository { get; }
         public SignInManager<IdentityUser> _signInManager { get; }
 
         public AccountController(
             UserManager<IdentityUser> userManager,
             RoleManager<IdentityRole> roleManager,
+            IGenericRepository<Log>  logGenericRepository,
             SignInManager<IdentityUser> signInManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _logGenericRepository = logGenericRepository;
             _signInManager = signInManager;
         }
 
@@ -73,6 +81,13 @@ namespace OnlineShoppingAPI.Controllers
             var result = await _signInManager.PasswordSignInAsync(existUser, login.Password, true, false);
             if (result.Succeeded)
             {
+                var guid = Guid.NewGuid().ToString();
+                Response.Cookies.Append(ConstantValue.UserGuid, guid);
+                await _logGenericRepository.AddAndCommit(new Log()
+                {
+                     ExpireDate= DateTime.Now.AddMinutes(10),
+                      UserGuid= guid,
+                });
                 return Ok();
             }
             return BadRequest();
@@ -90,6 +105,7 @@ namespace OnlineShoppingAPI.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
+            Response.Cookies.Delete(ConstantValue.UserGuid);
             return Ok();
         }
     }

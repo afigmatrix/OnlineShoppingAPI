@@ -35,7 +35,7 @@ namespace OnlineShoppingAPI
 
             services.AddControllers(op =>
             {
-                //op.Filters.Add(new CustomGlobalActionFilter());
+                //op.Filters.Add(typeof(UserCheckerFilter));
             });
             services.AddAutoMapper(typeof(Startup));
             services.AddMvc().AddNewtonsoftJson(options => { options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore; });

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -9,7 +10,9 @@ using OnlineShoppingAPI.DAL;
 using OnlineShoppingAPI.Entites;
 using OnlineShoppingAPI.Model.DTO;
 using OnlineShoppingAPI.Service.Abstractions;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -26,16 +29,19 @@ namespace OnlineShoppingAPI.Controllers
         public IGenericRepository<Product> _productRepo { get; }
         public IGenericRepository<Category> _categoryRepo { get; }
         public IProductRepository _baseProdRepo { get; }
+        public IWebHostEnvironment _env { get; }
 
         public ProductController(IMapper mapper,
             IGenericRepository<Product> productRepo,
             IGenericRepository<Category> categoryRepo,
-            IProductRepository baseProdRepo)
+            IProductRepository baseProdRepo,
+            IWebHostEnvironment env)
         {
             _mapper = mapper;
             _productRepo = productRepo;
             _categoryRepo = categoryRepo;
             _baseProdRepo = baseProdRepo;
+            _env = env;
         }
 
         //[ServiceFilter(typeof(CustomActionBaseActionFilter))]
@@ -58,7 +64,7 @@ namespace OnlineShoppingAPI.Controllers
         {
             var myList = _mapper.Map<List<ProductNPDTO>>(await _productRepo.GetAllTable().IgnoreQueryFilters().ToListAsync());
 
-            var result = myList.Where(m => m.Price > 10).Select(m=>m.Price);
+            var result = myList.Where(m => m.Price > 10).Select(m => m.Price);
             myList.Add(new ProductNPDTO { Name = "Afiq", Price = 3400 });
 
             return StatusCode(StatusCodes.Status200OK, result.Count());
@@ -68,14 +74,14 @@ namespace OnlineShoppingAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetProductById(int id)
         {
-            ProductDTO productEntity = _mapper.Map<ProductDTO>(await _productRepo.GetAllTable().Include(m=>m.Category).FirstOrDefaultAsync(m => m.Id == id));
+            ProductDTO productEntity = _mapper.Map<ProductDTO>(await _productRepo.GetAllTable().Include(m => m.Category).FirstOrDefaultAsync(m => m.Id == id));
             string productCategoryName = productEntity.Category.Name;
             return StatusCode(StatusCodes.Status200OK, productEntity);
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AddProduct(ProductAddUIDTO addProduct)
+        //[Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddProduct([FromForm] ProductAddUIDTO addProduct)
         {
             var loginnedUser = User;
             var errorList = new List<string>();
@@ -101,9 +107,16 @@ namespace OnlineShoppingAPI.Controllers
                 return StatusCode(StatusCodes.Status405MethodNotAllowed, errorList);
             }
             var myAddProductEntity = _mapper.Map<Product>(addProduct);
+            var fileUniqueName = string.Concat(Guid.NewGuid().ToString(), addProduct.File.FileName);
+            var folderPath = Path.Combine(_env.WebRootPath, "Product");
+            var fullPath = Path.Combine(folderPath, fileUniqueName);
+            Directory.CreateDirectory(folderPath);
+            using (FileStream fs = new FileStream(fullPath, FileMode.Create))
+            {
+                addProduct.File.CopyTo(fs);
+            }
+            myAddProductEntity.FilePath = fileUniqueName;
 
-            //await _context.Products.AddAsync(myAddProductEntity);
-            //await _context.SaveChangesAsync();
             await _productRepo.AddAndCommit(myAddProductEntity);
             return StatusCode(StatusCodes.Status201Created, myAddProductEntity.Name);
         }
@@ -113,6 +126,13 @@ namespace OnlineShoppingAPI.Controllers
         public async Task<IActionResult> CalculateProductPrice(int id)
         {
             var result = _baseProdRepo.CalculateProductPrice(id);
+            return StatusCode(StatusCodes.Status200OK, result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProductFile(int id)
+        {
+            var result = await _baseProdRepo.GetProductFileBase64(id);
             return StatusCode(StatusCodes.Status200OK, result);
         }
     }

@@ -13,6 +13,7 @@ namespace OnlineShoppingAPI.DAL
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Region> Regions { get; set; }
+        public DbSet<Log> Logs { get; set; }
         public DbSet<Customer> Customers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)

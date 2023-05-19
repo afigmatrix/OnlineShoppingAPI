@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace OnlineShoppingAPI.Model.DTO
 {
@@ -11,6 +12,7 @@ namespace OnlineShoppingAPI.Model.DTO
         public int Quantity { get; set; }
         public int CategoryId { get; set; }
         public string ColorInfo { get; set; }
+        public IFormFile File { get; set; }
     }
 
 }
