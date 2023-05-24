@@ -21,7 +21,7 @@ namespace OnlineShoppingAPI.Service.Implementations
         public decimal CalculateProductPrice(int id)
         {
             var productEntity = _productRepo.GetById(id);
-            decimal result = productEntity.Price - 5m;
+            decimal result = productEntity.Price - 4m;
             return result;
         }
 

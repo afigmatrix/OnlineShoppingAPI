@@ -14,6 +14,7 @@ using OnlineShoppingAPI.ActionFIlters;
 using OnlineShoppingAPI.DAL;
 using OnlineShoppingAPI.Service.Abstractions;
 using OnlineShoppingAPI.Service.Implementations;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,11 @@ namespace OnlineShoppingAPI
             services.AddScoped<CustomActionBaseActionFilter>();
             services.AddDbContext<OnlineShoppingDBContext>(
               op => op.UseSqlServer(Configuration.GetConnectionString("Default")));
-
+            services.AddLogging(lb =>
+            {
+                lb.ClearProviders();
+                lb.AddSerilog();
+            });
             services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<OnlineShoppingDBContext>()
                 .AddDefaultTokenProviders();
             services.Configure<IdentityOptions>(options =>

@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
+using Castle.Core.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 using OnlineShoppingAPI.ActionFIlters;
 using OnlineShoppingAPI.DAL;
 using OnlineShoppingAPI.Entites;
@@ -30,31 +33,50 @@ namespace OnlineShoppingAPI.Controllers
         public IGenericRepository<Category> _categoryRepo { get; }
         public IProductRepository _baseProdRepo { get; }
         public IWebHostEnvironment _env { get; }
+        //public ILogger<ProductController> _productLogger { get; }
 
         public ProductController(IMapper mapper,
             IGenericRepository<Product> productRepo,
             IGenericRepository<Category> categoryRepo,
             IProductRepository baseProdRepo,
+            //ILogger<ProductController> productLogger,
             IWebHostEnvironment env)
         {
             _mapper = mapper;
             _productRepo = productRepo;
             _categoryRepo = categoryRepo;
             _baseProdRepo = baseProdRepo;
+            //_productLogger = productLogger;
             _env = env;
         }
 
         //[ServiceFilter(typeof(CustomActionBaseActionFilter))]
         [HttpGet]
-        public async Task<IActionResult> GetProducts(IFormFile file)
+        public async Task<IActionResult> GetProducts()
         {
-            var myList = _mapper.Map<List<ProductNPDTO>>(await _productRepo.GetAll());
-            return StatusCode(StatusCodes.Status200OK, myList);
+            //HttpContext.Response.Headers.Add("MyCustomHeaderKey", "asjkdhaksdhgkuashdbkasugdhb");
+
+            try
+            {
+                //throw new NullReferenceException("Object is null");
+                Serilog.Log.Information("Custom Log Logged");
+                //_productLogger.LogInformation("Custom Log Logged");
+                var myList = _mapper.Map<List<ProductNPDTO>>(await _productRepo.GetAll());
+                return StatusCode(StatusCodes.Status200OK, myList);
+            }
+            catch (Exception ex)
+            {
+                //_productLogger.LogError(ex, "Error occured when getting datas");
+                Serilog.Log.Error(ex, "Error occured when getting datas");
+                return BadRequest();
+            }
+         
         }
 
         [HttpGet]
         public async Task<IActionResult> GetProductsWithDeleted()
         {
+            //var myData = HttpContext.Request.Headers.TryGetValue("MyCustomHeaderKey",out StringValues strings);
             var myList = _mapper.Map<List<ProductNPDTO>>(await _productRepo.GetAllTable().IgnoreQueryFilters().ToListAsync());
             return StatusCode(StatusCodes.Status200OK, myList);
         }
